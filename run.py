@@ -18,8 +18,8 @@ def run_day(day_num):
 
     try:
         day_module = __import__(day_module_name)
-    except:
-        print(f'Day {day_str} not found')
+    except Exception as ex:
+        print(f'Day {day_str} not found or error running: {ex}')
         return
 
     if day_num in result_module.results:
@@ -33,8 +33,8 @@ def run_day(day_num):
             print(f'Day {day_str}, Part 1:', f'{part1_val:<35}', f'{results[1]:<35}', 'PASS' if results[1] == part1_val else 'FAIL')
         else:
             print(f'Day {day_str}, Part 1:', f'{part1_val:<35}')
-    except:
-        print(f'Day {day_str}, Part 1: Not found.')
+    except Exception as ex:
+        print(f'Day {day_str}, Part 1: Not found or error running: {ex}')
 
     try:
         part2_val = day_module.part2(args.o)
@@ -42,8 +42,8 @@ def run_day(day_num):
             print(f'Day {day_str}, Part 2:', f'{part2_val:<35}', f'{results[2]:<35}', 'PASS' if results[2] == part2_val else 'FAIL')
         else:
             print(f'Day {day_str}, Part 2:', f'{part2_val:<35}')
-    except:
-        print(f'Day {day_str}, Part 2: Not found.')
+    except Exception as ex:
+        print(f'Day {day_str}, Part 2: Not found or error running: {ex}')
 
 if args.d == 0:
     args.o = False
