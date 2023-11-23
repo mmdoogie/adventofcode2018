@@ -30,7 +30,10 @@ def run_day(day_num):
     try:
         part1_val = day_module.part1(args.o)
         if results is not None and 1 in results:
-            print(f'Day {day_str}, Part 1:', f'{part1_val:<35}', f'{results[1]:<35}', 'PASS' if results[1] == part1_val else 'FAIL')
+            if 'no_match' not in results or 1 not in results['no_match']:
+                print(f'Day {day_str}, Part 1:', f'{part1_val:<35}', f'{results[1]:<35}', 'PASS' if results[1] == part1_val else 'FAIL')
+            else:
+                print(f'Day {day_str}, Part 1:', f'{part1_val:<35}', f'expecting: {results[1]:<35}')
         else:
             print(f'Day {day_str}, Part 1:', f'{part1_val:<35}')
     except Exception as ex:
@@ -39,7 +42,10 @@ def run_day(day_num):
     try:
         part2_val = day_module.part2(args.o)
         if results is not None and 2 in results:
-            print(f'Day {day_str}, Part 2:', f'{part2_val:<35}', f'{results[2]:<35}', 'PASS' if results[2] == part2_val else 'FAIL')
+            if 'no_match' not in results or 2 not in results['no_match']:
+                print(f'Day {day_str}, Part 2:', f'{part2_val:<35}', f'{results[2]:<35}', 'PASS' if results[2] == part2_val else 'FAIL')
+            else:
+                print(f'Day {day_str}, Part 2:', f'{part2_val:<35}', f'expecting: {results[2]:<35}')
         else:
             print(f'Day {day_str}, Part 2:', f'{part2_val:<35}')
     except Exception as ex:
