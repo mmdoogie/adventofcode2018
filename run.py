@@ -15,12 +15,13 @@ result_module = __import__(result_module_name).results
 def run_day(day_num):
     day_str = f'{day_num:02d}'
     day_module_name = f'AOC-2018-{day_str}'
+    passing = [False, False]
 
     try:
         day_module = __import__(day_module_name)
     except Exception as ex:
         print(f'Day {day_str} not found or error running: {ex}')
-        return
+        return 0
 
     if day_num in result_module.results:
         results = result_module.results[day_num]
@@ -31,8 +32,10 @@ def run_day(day_num):
         part1_val = day_module.part1(args.o)
         if results is not None and 1 in results:
             if 'no_match' not in results or 1 not in results['no_match']:
-                print(f'Day {day_str}, Part 1:', f'{part1_val:<35}', f'{results[1]:<35}', 'PASS' if results[1] == part1_val else 'FAIL')
+                passing[0] = (results[1] == part1_val)
+                print(f'Day {day_str}, Part 1:', f'{part1_val:<35}', f'{results[1]:<35}', 'PASS' if passing[0] else 'FAIL')
             else:
+                passing[0] = True
                 print(f'Day {day_str}, Part 1:', f'{part1_val:<35}', f'expecting: {results[1]:<35}')
         else:
             print(f'Day {day_str}, Part 1:', f'{part1_val:<35}')
@@ -43,17 +46,21 @@ def run_day(day_num):
         part2_val = day_module.part2(args.o)
         if results is not None and 2 in results:
             if 'no_match' not in results or 2 not in results['no_match']:
-                print(f'Day {day_str}, Part 2:', f'{part2_val:<35}', f'{results[2]:<35}', 'PASS' if results[2] == part2_val else 'FAIL')
+                passing[1] = (results[2] == part2_val)
+                print(f'Day {day_str}, Part 2:', f'{part2_val:<35}', f'{results[2]:<35}', 'PASS' if passing[1] else 'FAIL')
             else:
+                passing[1] = True
                 print(f'Day {day_str}, Part 2:', f'{part2_val:<35}', f'expecting: {results[2]:<35}')
         else:
             print(f'Day {day_str}, Part 2:', f'{part2_val:<35}')
     except Exception as ex:
         print(f'Day {day_str}, Part 2: Not found or error running: {ex}')
 
+    return sum(passing)
+
 if args.d == 0:
     args.o = False
-    for day_num in range(1, 26):
-        run_day(day_num)
+    passing = sum([run_day(day_num) for day_num in range(1, 26)])
+    print('Passing:', passing, 'of 50')
 else:
     run_day(args.d)
