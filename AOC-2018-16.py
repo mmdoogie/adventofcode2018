@@ -122,6 +122,7 @@ def part2(output = True):
             break
 
     if output:
+        print('Final opcode map:', potentials)
         print('Running test program')
 
     opmap = {k: opcodes[list(v)[0]] for k, v in potentials.items()}
