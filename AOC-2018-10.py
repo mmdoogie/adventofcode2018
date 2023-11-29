@@ -1,15 +1,21 @@
-with open('data/aoc-2018-10.txt') as f:
+from io import BytesIO
+from subprocess import Popen, PIPE
+
+from PIL import Image
+from PIL.ImageDraw import Draw
+
+with open('data/aoc-2018-10.txt', encoding='utf-8') as f:
     dat = [x.strip() for x in f.readlines()]
 
 def min_pos(pos):
-    min_x = min(pos, key=lambda x: x[0])[0]
-    min_y = min(pos, key=lambda x: x[1])[1]
+    min_x = min(p[0] for p in pos)
+    min_y = min(p[1] for p in pos)
 
     return (min_x, min_y)
 
 def max_pos(pos):
-    max_x = max(pos, key=lambda x: x[0])[0]
-    max_y = max(pos, key=lambda x: x[1])[1]
+    max_x = max(p[0] for p in pos)
+    max_y = max(p[1] for p in pos)
 
     return (max_x, max_y)
 
@@ -29,46 +35,73 @@ def find_msg(output = True):
     it = 0
     while True:
         it += 1
-        for i in range(len(pos)):
-            pos[i][0] += vel[i][0]
-            pos[i][1] += vel[i][1]
+        for p, v in zip(pos, vel):
+            p[0] += v[0]
+            p[1] += v[1]
         a = area_pos(pos)
         if a < min_area:
-            if output:
+            if output and (it % 1000 == 0 or a < 100000):
                 print('Step:', it, 'Area:', a)
             min_area = a
             min_it = it
         if it - min_it >= 1:
             break
-    
-    for i in range(len(pos)):
-        pos[i][0] -= vel[i][0]
-        pos[i][1] -= vel[i][1]
+
+    for p, v in zip(pos, vel):
+        p[0] -= v[0]
+        p[1] -= v[1]
     assert area_pos(pos) == min_area
 
+    return pos, it - 1
+
+def make_image(pos, output):
     min_x, min_y = min_pos(pos)
     max_x, max_y = max_pos(pos)
 
-    lines = ['']
+    width = max_x - min_x
+    height = max_y - min_y
+
+    im = Image.new('1', (2 * width + 2, height + 2), color = 1)
+    draw = Draw(im)
+
     for y in range(min_y, max_y + 1):
-        line = ''
         for x in range(min_x, max_x + 1):
             if [x, y] in pos:
-                line += '##'
-            else:
-                line += '  '
-        lines += [line]
-    lines += ['']
+                draw.point(((x - min_x) * 2 + 1, y - min_y + 1), fill = 0)
+                draw.point(((x - min_x) * 2 + 2, y - min_y + 1), fill = 0)
+                if output:
+                    print('**', end = '')
+            elif output:
+                print('  ', end='')
+        if output:
+            print()
 
-    return '\n'.join(lines), it - 1
+    return im
+
+def ocr_image(img):
+    raw_io = BytesIO()
+    img.save(raw_io, 'ppm')
+    raw_io.seek(0)
+
+    with Popen(["gocr", "-"], stdin=PIPE, stdout=PIPE) as gocr_proc:
+        gocr_proc.stdin.write(raw_io.read())
+        gocr_proc.stdin.close()
+        gocr_proc.wait()
+        txt = gocr_proc.stdout.read().decode('utf-8').strip('\n')
+        gocr_proc.stdout.close()
+
+    return txt
+
+msg_time = 0
 
 def part1(output = True):
     global msg_time
-    txt, msg_time = find_msg(output)
-    
+    pos, msg_time = find_msg(output)
+
+    img = make_image(pos, output)
+    txt = ocr_image(img)
+
     return txt
 
 def part2(output = True):
-    global msg_time
-
     return msg_time
