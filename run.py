@@ -1,23 +1,17 @@
 import argparse
+import sys
 import time
+import traceback
 
-ap = argparse.ArgumentParser()
-ap.add_argument('-d', type = int, required = True, help = 'Day to run. 0 for all.')
-ap.add_argument('-o', action = 'store_true', help = 'Show optional output')
-args = ap.parse_args()
+RESULT_MODULE_NAME = 'data.results'
+RESULT_MODULE = __import__(RESULT_MODULE_NAME).results
 
-if args.d < 0 or args.d > 35:
-    print('Day must be between 1 and 35 inclusive.  Use 0 for all')
-    exit(1)
+COLOR_PASS_STR = chr(27) + '[32mPASS' + chr(27) + '[0m'
+COLOR_FAIL_STR = chr(27) + '[31mFAIL' + chr(27) + '[0m'
 
-result_module_name = 'data.results'
-result_module = __import__(result_module_name).results
-
-def run_day(day_num):
+def run_daypart(day_num, part_num, output):
     day_str = f'{day_num:02d}'
     day_module_name = f'AOC-2018-{day_str}'
-    passing = [False, False]
-    total_time = 0
 
     try:
         day_module = __import__(day_module_name)
@@ -25,56 +19,64 @@ def run_day(day_num):
         print(f'Day {day_str} not found or error running: {ex}')
         return 0, 0
 
-    if day_num in result_module.results:
-        results = result_module.results[day_num]
+    if day_num in RESULT_MODULE.results:
+        results = RESULT_MODULE.results[day_num]
     else:
         results = None
 
     try:
         t_before = time.process_time()
-        part1_val = day_module.part1(args.o)
-        t_after = time.process_time()
-        dt = round(t_after - t_before, 3)
-        total_time += dt
-        print(f'[{dt:>7.3f}] ', end='')
-        if results is not None and 1 in results:
-            if 'no_match' not in results or 1 not in results['no_match']:
-                passing[0] = (results[1] == part1_val)
-                print(f'Day {day_str}, Part 1:', f'{part1_val:<35}', f'{results[1]:<35}', 'PASS' if passing[0] else 'FAIL')
-            else:
-                passing[0] = True
-                print(f'Day {day_str}, Part 1:', f'{part1_val:<35}', f'expecting: {results[1]:<35}')
+
+        if part_num == 1:
+            daypart_val = day_module.part1(output)
         else:
-            print(f'Day {day_str}, Part 1:', f'{part1_val:<35}')
-    except Exception as ex:
-        print(f'Day {day_str}, Part 1: Not found or error running: {ex}')
+            daypart_val = day_module.part2(output)
 
-    try:
-        t_before = time.process_time()
-        part2_val = day_module.part2(args.o)
         t_after = time.process_time()
-        dt = round(t_after - t_before, 3)
-        total_time += dt
-        print(f'[{dt:>7.3f}] ', end='')
-        if results is not None and 2 in results:
-            if 'no_match' not in results or 2 not in results['no_match']:
-                passing[1] = (results[2] == part2_val)
-                print(f'Day {day_str}, Part 2:', f'{part2_val:<35}', f'{results[2]:<35}', 'PASS' if passing[1] else 'FAIL')
+        exec_time = round(t_after - t_before, 3)
+
+        print(f'[{exec_time:>7.3f}] Day {day_str}, Part {part_num}: ', end='')
+        if results is not None and part_num in results:
+            if 'no_match' not in results or part_num not in results['no_match']:
+                daypart_expect = results[part_num]
+                passing = daypart_val == daypart_expect
+                pf_str = COLOR_PASS_STR if passing else COLOR_FAIL_STR
+                print(f'{daypart_val:<35}', f'{daypart_expect:<35}', pf_str)
             else:
-                passing[1] = True
-                print(f'Day {day_str}, Part 2:', f'{part2_val:<35}', f'expecting: {results[2]:<35}')
+                passing = True
+                print(f'{daypart_val:<35}', f'expecting: {daypart_expect:<35}')
         else:
-            print(f'Day {day_str}, Part 2:', f'{part2_val:<35}')
+            print(f'{daypart_val:<35}')
     except Exception as ex:
-        print(f'Day {day_str}, Part 2: Not found or error running: {ex}')
+        print(f'Day {day_str}, Part {part_num}: Not found or error running: {ex}')
+        print(traceback.format_exc())
+        sys.exit(1)
 
-    return sum(passing), total_time
+    return passing, exec_time
 
-if args.d == 0:
-    args.o = False
-    results = [run_day(day_num) for day_num in range(1, 26)]
-    passing = sum([r[0] for r in results])
-    total_time = sum([r[1] for r in results])
-    print(f'[{total_time:>7.3f}] Passing:', passing, 'of 50')
-else:
-    run_day(args.d)
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('-d', type = int, required = True, help = 'Day to run. 0 for all.')
+    ap.add_argument('-p', type = int, choices = [1, 2], help = 'Only runs specified part 1 or 2.')
+    ap.add_argument('-o', action = 'store_true', help = 'Show optional output. Ignored for -d0.')
+    args = ap.parse_args()
+
+    if args.d < 0 or args.d > 35:
+        print('Day must be between 1 and 35 inclusive.  Use 0 for all')
+        sys.exit(1)
+
+    part_nums = set([args.p]) if args.p else set([1, 2])
+
+    if args.d == 0:
+        print(chr(27) + '[H' + chr(27) + '[2J')
+        results = [run_daypart(day, part, False) for day in range(1, 26) for part in part_nums]
+        passing = sum(r[0] for r in results)
+        total_time = sum(r[1] for r in results)
+        total_cnt = 25 * len(part_nums)
+        print(f'[{total_time:>7.3f}] Passing:', passing, 'of', total_cnt)
+    else:
+        for part_num in part_nums:
+            run_daypart(args.d, part_num, args.o)
+
+if __name__ == '__main__':
+    main()
