@@ -1,7 +1,10 @@
+from collections import namedtuple
 import re
 import time
 
-with open('data/aoc-2018-17.txt') as f:
+import ansi_term as ansi
+
+with open('data/aoc-2018-17.txt', encoding = 'utf-8') as f:
     dat = [x.strip('\n') for x in f.readlines()]
 
 def parse():
@@ -22,76 +25,86 @@ def parse():
 
     return clay
 
-def print_section(clay, dx, dy, max_y):
-    print(chr(27) + '[H')
-    print(' '*120 + 'v--' + f'{dx:04d}')
-    for y in range(dy - 25, dy + 25):
-        for x in range(dx - 120, dx + 120):
-            if y > max_y:
+Point = namedtuple('Point', ['x', 'y'])
+Range = namedtuple('Range', ['min', 'max'])
+
+def print_section(clay, visited, drop_point, y_range):
+    ansi.cursor_home()
+
+    print(' '*120 + 'v--' + f'{drop_point.x:04d}')
+    for y in range(drop_point.y - 25, drop_point.y + 25):
+        for x in range(drop_point.x - 120, drop_point.x + 120):
+            if y > y_range.max:
                 print('=', end = '')
-            elif x == dx and y == dy:
+            elif x == drop_point.x and y == drop_point.y:
                 print('o', end = '')
             elif (x, y) in clay:
-                print('#', end = '')
+                if clay[(x, y)]:
+                    print(ansi.red('#'), end = '')
+                else:
+                    print(ansi.blue('~'), end = '')
+            elif (x, y) in visited:
+                print(ansi.green('|'), end = '')
             else:
                 print(' ', end = '')
-        print(f'[{y:04d}]', '**' if y == dy else '')
+        print(f' [{y:04d}]', '**' if y == drop_point.y else '')
     time.sleep(0.01)
 
-def drip(drip_x, drip_y, clay, visited, min_y, max_y, output):
-    if (drip_x, drip_y + 1) in visited:
+def drip(drop_point, clay, visited, y_range, output):
+    drop_x, drop_y = drop_point
+
+    if (drop_x, drop_y + 1) in visited:
         return
-    drop_x, drop_y = drip_x, drip_y
+
     while (drop_x, drop_y + 1) not in clay:
         drop_y += 1
-        if drop_y >= min_y and drop_y <= max_y:
+        if y_range.min <= drop_y <= y_range.max:
             visited.add((drop_x, drop_y))
             if output:
-                print_section(clay, drop_x, drop_y, max_y)
-        if drop_y > max_y:
+                print_section(clay, visited, Point(drop_x, drop_y), y_range)
+                print(len(visited))
+        elif drop_y > y_range.max:
             return
 
-    fill_y = drop_y
     while True:
-        visited.add((drop_x, fill_y))
+        visited.add((drop_x, drop_y))
         if output:
-            print_section(clay, drop_x, fill_y, max_y)
+            print_section(clay, visited, Point(drop_x, drop_y), y_range)
+            print(len(visited))
 
-        new_lvl = [(drop_x, fill_y)]
+        new_lvl = [(drop_x, drop_y)]
         left_x = drop_x
         left_fall = None
-        while (left_x - 1, fill_y) not in clay:
+        while (left_x - 1, drop_y) not in clay:
             left_x -= 1
-            new_lvl += [(left_x, fill_y)]
-            visited.add((left_x, fill_y))
-            if (left_x, fill_y + 1) not in clay:
-                left_fall = (left_x, fill_y)
+            new_lvl += [(left_x, drop_y)]
+            visited.add((left_x, drop_y))
+            if (left_x, drop_y + 1) not in clay:
+                left_fall = Point(left_x, drop_y)
                 break
 
         right_x = drop_x
         right_fall = None
-        while (right_x + 1, fill_y) not in clay:
+        while (right_x + 1, drop_y) not in clay:
             right_x += 1
-            new_lvl += [(right_x, fill_y)]
-            visited.add((right_x, fill_y))
-            if (right_x, fill_y + 1) not in clay:
-                right_fall = (right_x, fill_y)
+            new_lvl += [(right_x, drop_y)]
+            visited.add((right_x, drop_y))
+            if (right_x, drop_y + 1) not in clay:
+                right_fall = Point(right_x, drop_y)
                 break
 
         if left_fall is not None or right_fall is not None:
             break
 
         for n in new_lvl:
-            clay[n] = True
-        if output:
-            print(len(visited))
-        fill_y -= 1
+            clay[n] = False
+        drop_y -= 1
 
     if left_fall is not None:
-        drip(*left_fall, clay, visited, min_y, max_y, output)
+        drip(left_fall, clay, visited, y_range, output)
 
     if right_fall is not None:
-        drip(*right_fall, clay, visited, min_y, max_y, output)
+        drip(right_fall, clay, visited, y_range, output)
 
 clay_change = 0
 
@@ -99,23 +112,27 @@ def part1(output = True):
     global clay_change
 
     clay = parse()
-    spring = (500, 0)
+    spring = Point(500, 0)
     visited = set()
     min_y = min(clay.keys(), key = lambda x: x[1])[1]
     max_y = max(clay.keys(), key = lambda x: x[1])[1]
-
-    if output:
-        print(chr(27) + '[2J')
+    y_range = Range(min_y, max_y)
 
     pre_clay = len(clay)
-    drip(*spring, clay, visited, min_y, max_y, output)
+    if output:
+        ansi.clear_screen()
+        with ansi.hidden_cursor():
+            drip(spring, clay, visited, y_range, True)
+    else:
+        drip(spring, clay, visited, y_range, False)
     post_clay = len(clay)
     clay_change = post_clay - pre_clay
 
     return len(visited)
 
 def part2(output = True):
-    global clay_change
+    if clay_change == 0:
+        part1(False)
 
     return clay_change
 

@@ -3,11 +3,13 @@ import sys
 import time
 import traceback
 
+import ansi_term as ansi
+
 RESULT_MODULE_NAME = 'data.results'
 RESULT_MODULE = __import__(RESULT_MODULE_NAME).results
 
-COLOR_PASS_STR = chr(27) + '[32mPASS' + chr(27) + '[0m'
-COLOR_FAIL_STR = chr(27) + '[31mFAIL' + chr(27) + '[0m'
+COLOR_PASS_STR = ansi.green('PASS')
+COLOR_FAIL_STR = ansi.red('FAIL')
 
 def run_daypart(day_num, part_num, output):
     day_str = f'{day_num:02d}'
@@ -68,7 +70,7 @@ def main():
     part_nums = set([args.p]) if args.p else set([1, 2])
 
     if args.d == 0:
-        print(chr(27) + '[H' + chr(27) + '[2J')
+        ansi.clear_screen()
         results = [run_daypart(day, part, False) for day in range(1, 26) for part in part_nums]
         passing = sum(r[0] for r in results)
         total_time = sum(r[1] for r in results)

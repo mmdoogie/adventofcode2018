@@ -104,4 +104,6 @@ def part1(output = True):
     return txt
 
 def part2(output = True):
+    if msg_time == 0:
+        part1(False)
     return msg_time
