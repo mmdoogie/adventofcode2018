@@ -48,6 +48,7 @@ def run_daypart(day_num, part_num, output):
                 passing = True
                 print(f'{daypart_val:<35}', f'expecting: {daypart_expect:<35}')
         else:
+            passing = False
             print(f'{daypart_val:<35}')
     except Exception as ex:
         print(f'Day {day_str}, Part {part_num}: Not found or error running: {ex}')
