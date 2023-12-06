@@ -1,7 +1,7 @@
 from functools import total_ordering
 
 import ansi_term as ansi
-from Djikstra import Djikstra
+from djikstra import djikstra
 
 with open('data/aoc-2018-15.txt', encoding = 'utf-8') as f:
     dat = [x.strip('\n') for x in f.readlines()]
@@ -126,7 +126,7 @@ def play_game(output = True, elf_power = 3, end_at_first_loss = False):
         targets = adj_targets(o, umap)
         if len(targets) == 0:
             ngh = make_adj(o, umap, spaces)
-            weights, paths = Djikstra(ngh, (o.x, o.y))
+            weights, paths = djikstra(ngh, start_point=(o.x, o.y))
             move_tgt = closest(weights, o, umap)
             if move_tgt is not None:
                 move_path = paths[move_tgt]

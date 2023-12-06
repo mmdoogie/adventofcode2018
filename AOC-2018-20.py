@@ -1,7 +1,7 @@
 from collections import deque, defaultdict
 
 import ansi_term as ansi
-from Djikstra import Djikstra
+from djikstra import djikstra
 
 with open('data/aoc-2018-20.txt', encoding = 'utf-8') as f:
     dat = [x.strip('\n') for x in f.readlines()]
@@ -102,7 +102,7 @@ def part1(output = True):
             explore(opset, adj, (0, 0), True)
     else:
         explore(opset, adj, (0, 0), False)
-    room_weights, _ = Djikstra(adj, (0, 0))
+    room_weights = djikstra(adj, start_point = (0, 0), keep_paths = False)
     furthest_door = max(w for w in room_weights.values())
     return furthest_door
 
