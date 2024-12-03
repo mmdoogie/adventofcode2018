@@ -1,6 +1,8 @@
 # adventofcode2018
 My solutions to Advent of Code 2018 problems.
 
+This repository is being archived.  All of my solutions are now in a unified repository at https://github.com/mmdoogie/AdventOfCode
+
     python run.py -d 0
     [  0.000] Day 01, Part 1: 580                                 580                                 PASS ✅
     [  0.018] Day 01, Part 2: 81972                               81972                               PASS ✅
